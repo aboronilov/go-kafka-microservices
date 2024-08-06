@@ -10,4 +10,8 @@ receiver:
 	@echo "Startig RECEVIER app"
 	@./bin/receiver
 
+kafka:
+	@echo "Runninig kafka with zookeeper..."
+	@docker compose up -d
+
 .PHONY: obu receiver
