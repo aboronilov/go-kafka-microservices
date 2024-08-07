@@ -1,47 +1,15 @@
 package main
 
-import (
-	"fmt"
-	"time"
+import "github.com/sirupsen/logrus"
 
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-)
-
-type DistanceCalculator struct {
-	consumer DataConsumer
-}
+const kafkaTopic = "obudata"
 
 func main() {
-	fmt.Println("Distance calculation started")
-
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost",
-		"group.id":          "myGroup",
-		"auto.offset.reset": "earliest",
-	})
-
+	calcService := NewCalculatorService()
+	kafkaConsumer, err := NewKafkaConsumer(kafkaTopic, calcService)
 	if err != nil {
-		panic(err)
+		logrus.Fatalf("Error creating Kafka consumer: %v\n", err)
+		return
 	}
-
-	err = c.SubscribeTopics([]string{"myTopic", "^aRegex.*[Tt]opic"}, nil)
-
-	if err != nil {
-		panic(err)
-	}
-
-	// A signal handler or similar could be used to set this to false to break the loop.
-	run := true
-
-	for run {
-		msg, err := c.ReadMessage(time.Second)
-		if err == nil {
-			fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
-		} else if !err.(kafka.Error).IsTimeout() {
-			// The client will automatically try to recover from all errors.
-			// Timeout is not considered an error because it is raised by
-			// ReadMessage in absence of messages.
-			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
-		}
-	}
+	kafkaConsumer.Start()
 }

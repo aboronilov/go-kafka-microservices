@@ -38,6 +38,7 @@ func main() {
 			if err := conn.WriteJSON(data); err != nil {
 				log.Fatal("write data error:", err)
 			}
+			log.Printf("Sent data for OBUID: %d, Lat: %.2f, Long: %.2f\n", data.OBUID, data.Lat, data.Long)
 		}
 		time.Sleep(sendInterval)
 	}
