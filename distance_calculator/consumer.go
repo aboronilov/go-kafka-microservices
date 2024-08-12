@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"time"
 
+	"github.com/aboronilov/go-kafka-microservices/aggregator/client"
 	"github.com/aboronilov/go-kafka-microservices/types"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/sirupsen/logrus"
@@ -12,9 +14,10 @@ type KafkaConsumer struct {
 	consumer    *kafka.Consumer
 	isRunning   bool
 	calcService CalculatorServicer
+	aggClient   *client.Client
 }
 
-func NewKafkaConsumer(topic string, svc CalculatorServicer) (*KafkaConsumer, error) {
+func NewKafkaConsumer(topic string, svc CalculatorServicer, client *client.Client) (*KafkaConsumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": "localhost",
 		"group.id":          "myGroup",
@@ -34,6 +37,7 @@ func NewKafkaConsumer(topic string, svc CalculatorServicer) (*KafkaConsumer, err
 	return &KafkaConsumer{
 		consumer:    c,
 		calcService: svc,
+		aggClient:   client,
 	}, nil
 }
 
@@ -63,6 +67,15 @@ func (c *KafkaConsumer) readMessageLoop() {
 			continue
 		}
 
-		_ = distance
+		dist := types.Distance{
+			Value: distance,
+			OBUID: data.OBUID,
+			Unix:  time.Now().Unix(),
+		}
+
+		if err := c.aggClient.AggregateInvoice(dist); err != nil {
+			logrus.Errorf("error aggregating invoice: %s", err)
+			continue
+		}
 	}
 }

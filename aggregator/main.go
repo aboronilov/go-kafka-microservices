@@ -17,6 +17,7 @@ func main() {
 
 	store := NewMemoryStore()
 	svc := NewInvoiceAggregator(store)
+	svc = NewLogMiddleware(svc)
 
 	makeHTTPTransport(*listenAddr, svc)
 }
@@ -30,22 +31,36 @@ func makeHTTPTransport(listenAddr string, svc Aggregator) {
 func handleAggregate(svc Aggregator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
+			writwJSON(
+				w,
+				http.StatusBadRequest,
+				map[string]string{"error": "Methot not allowed:"})
 			return
 		}
 
 		var dist types.Distance
 		if err := json.NewDecoder(r.Body).Decode(&dist); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writwJSON(
+				w,
+				http.StatusInternalServerError,
+				map[string]string{"error": err.Error()})
 			return
 		}
 
 		if err := svc.AggregateDistance(dist); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writwJSON(w, http.StatusBadRequest, map[string]string{
+				"error": err.Error(),
+			})
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(dist)
 	}
+}
+
+func writwJSON(w http.ResponseWriter, status int, v any) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(v)
 }
