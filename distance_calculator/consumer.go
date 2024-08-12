@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/aboronilov/go-kafka-microservices/types"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -64,6 +63,6 @@ func (c *KafkaConsumer) readMessageLoop() {
 			continue
 		}
 
-		fmt.Printf("Received data for OBUID: %d, Distance: %.2f km\n", data.OBUID, distance)
+		_ = distance
 	}
 }
