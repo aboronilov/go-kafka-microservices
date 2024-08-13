@@ -16,11 +16,11 @@ calculator:
 	@echo "Startig CALCULATOR app"
 	@./bin/calculator
 
-invoicer:
-	@echo "Building invoicer binary..."
-	@go build -o bin/invoicer ./invoicer
-	@echo "Startig INVOICER app"
-	@./bin/invoicer
+# invoicer:
+# 	@echo "Building invoicer binary..."
+# 	@go build -o bin/invoicer ./invoicer
+# 	@echo "Startig INVOICER app"
+# 	@./bin/invoicer
 
 aggregator:
 	@echo "Building aggregatoe binary..."
@@ -32,4 +32,4 @@ kafka:
 	@echo "Runninig kafka with zookeeper..."
 	@docker compose up -d
 
-.PHONY: obu receiver calculator kafka invoicer aggregator
+.PHONY: obu receiver calculator kafka aggregator
