@@ -23,7 +23,7 @@ calculator:
 # 	@./bin/invoicer
 
 aggregator:
-	@echo "Building aggregatoe binary..."
+	@echo "Building aggregator binary..."
 	@go build -o bin/aggregator ./aggregator
 	@echo "Startig AGGREGATOR app"
 	@./bin/aggregator
@@ -31,5 +31,8 @@ aggregator:
 kafka:
 	@echo "Runninig kafka with zookeeper..."
 	@docker compose up -d
+
+proto:
+	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative types/ptypes.proto
 
 .PHONY: obu receiver calculator kafka aggregator

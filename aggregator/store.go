@@ -24,7 +24,7 @@ func (m *MemoryStore) Insert(dist types.Distance) error {
 func (m *MemoryStore) Get(id int) (float64, error) {
 	dist, ok := m.data[id]
 	if !ok {
-		return 0.0, fmt.Errorf("invoice distance not found for OBU", id)
+		return 0.0, fmt.Errorf("invoice distance not found for OBU %d", id)
 	}
 
 	return dist, nil

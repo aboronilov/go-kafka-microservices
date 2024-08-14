@@ -4,23 +4,28 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 
 	"github.com/aboronilov/go-kafka-microservices/types"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 )
 
 func main() {
 	logrus.Info("Invoice service started")
-	listenAddr := flag.String("listenaddr", ":3000", "the listen port of HTTP transport")
+	httpListenAddr := flag.String("httpAddr", ":3000", "the listen port of HTTP transport")
+	grpcListenAddr := flag.String("grpcAddr", ":3001", "the listen port of GRPC transport")
 	flag.Parse()
 
 	store := NewMemoryStore()
 	svc := NewInvoiceAggregator(store)
 	svc = NewLogMiddleware(svc)
 
-	makeHTTPTransport(*listenAddr, svc)
+	go makeGRPCtransport(*grpcListenAddr, svc)
+
+	makeHTTPTransport(*httpListenAddr, svc)
 }
 
 func makeHTTPTransport(listenAddr string, svc Aggregator) {
@@ -28,6 +33,21 @@ func makeHTTPTransport(listenAddr string, svc Aggregator) {
 	http.HandleFunc("/aggregate", handleAggregate(svc))
 	http.HandleFunc("/invoice", handleGetInvoice(svc))
 	http.ListenAndServe(listenAddr, nil)
+}
+
+func makeGRPCtransport(listenAddr string, svc Aggregator) error {
+	fmt.Println("GRPC transport is running on port", listenAddr)
+
+	ln, err := net.Listen("TCP", listenAddr)
+	if err != nil {
+		return err
+	}
+
+	defer ln.Close()
+
+	server := grpc.NewServer([]grpc.ServerOption{}...)
+	types.RegisterAggregatorServer(server, NewGrpcAggregatorServer(svc))
+	return server.Serve(ln)
 }
 
 func handleGetInvoice(svc Aggregator) http.HandlerFunc {
