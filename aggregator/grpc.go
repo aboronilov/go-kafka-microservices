@@ -1,6 +1,10 @@
 package main
 
-import "github.com/aboronilov/go-kafka-microservices/types"
+import (
+	"context"
+
+	"github.com/aboronilov/go-kafka-microservices/types"
+)
 
 type GRPCAggregatorServer struct {
 	types.UnimplementedAggregatorServer
@@ -11,12 +15,12 @@ func NewGrpcAggregatorServer(svc Aggregator) *GRPCAggregatorServer {
 	return &GRPCAggregatorServer{svc: svc}
 }
 
-func (s *GRPCAggregatorServer) AggregateDistance(req *types.AggregateRequest) error {
+func (s *GRPCAggregatorServer) Aggregate(ctx context.Context, req *types.AggregateRequest) (*types.None, error) {
 	distance := types.Distance{
 		OBUID: int(req.ObuID),
 		Value: req.Value,
 		Unix:  req.Unix,
 	}
 
-	return s.svc.AggregateDistance(distance)
+	return &types.None{}, s.svc.AggregateDistance(distance)
 }
