@@ -13,9 +13,16 @@ const (
 func main() {
 	calcService := NewCalculatorService()
 	calcService = NewLogMiddleware(calcService)
-	aggClient := client.NewClient(aggregatorEndpoint)
 
-	kafkaConsumer, err := NewKafkaConsumer(kafkaTopic, calcService, aggClient)
+	// httpClient := client.NewClient(aggregatorEndpoint)
+
+	grpcClient, err := client.NewGrpcClient(aggregatorEndpoint)
+	if err != nil {
+		logrus.Fatalf("Error creating gRPC client: %v\n", err)
+		return
+	}
+
+	kafkaConsumer, err := NewKafkaConsumer(kafkaTopic, calcService, grpcClient)
 	if err != nil {
 		logrus.Fatalf("Error creating Kafka consumer: %v\n", err)
 		return
