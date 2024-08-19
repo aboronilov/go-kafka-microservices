@@ -1,3 +1,9 @@
+gate:
+	@echo "Building gateway binary..."
+	@go build -o bin/gate gateway/main.go
+	@echo "Startig GATEWAY app"
+	@./bin/gate
+
 obu:
 	@echo "Building obu binary..."
 	@go build -o bin/obu obu/main.go
@@ -35,4 +41,4 @@ kafka:
 proto:
 	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative types/ptypes.proto
 
-.PHONY: obu receiver calculator kafka aggregator
+.PHONY: obu receiver calculator kafka aggregator gate
