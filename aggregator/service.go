@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aboronilov/go-kafka-microservices/types"
+	"github.com/sirupsen/logrus"
 )
 
 const basePrice = 3.15
@@ -28,6 +29,11 @@ func NewInvoiceAggregator(store Storer) Aggregator {
 
 func (i *InvoiceAggregator) AggregateDistance(dist types.Distance) error {
 	fmt.Println("proceesing and inserting distance to storage:", dist)
+	logrus.WithFields(logrus.Fields{
+		"ObuID":     dist.OBUID,
+		"Distance":  dist.Value,
+		"Timestamp": dist.Unix,
+	})
 	return i.store.Insert(dist)
 }
 

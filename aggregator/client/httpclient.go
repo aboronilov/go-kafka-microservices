@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/aboronilov/go-kafka-microservices/types"
+	"github.com/sirupsen/logrus"
 )
 
 type HTTPClient struct {
@@ -27,7 +28,8 @@ func (c *HTTPClient) GetInvoice(ctx context.Context, id int) (*types.Invoice, er
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/invoice", c.Endpoint)
+	url := fmt.Sprintf("%s/%s?obu=%d", c.Endpoint, "invoice", id)
+	logrus.Info("Endpoint =>", url)
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(b))
 	if err != nil {
