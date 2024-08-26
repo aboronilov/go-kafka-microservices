@@ -28,6 +28,9 @@ calculator:
 # 	@echo "Startig INVOICER app"
 # 	@./bin/invoicer
 
+promehteus:
+	../prometheus/prometheus --config.file=./.config/prometheus.yml
+
 aggregator:
 	@echo "Building aggregator binary..."
 	@go build -o bin/aggregator ./aggregator
