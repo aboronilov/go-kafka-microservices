@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/aboronilov/go-kafka-microservices/types"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -23,6 +24,7 @@ func main() {
 	store := NewMemoryStore()
 	svc := NewInvoiceAggregator(store)
 	svc = NewLogMiddleware(svc)
+	svc = NewMetricsMiddleware(svc)
 
 	go func() {
 		log.Fatal(makeGRPCtransport(*grpcListenAddr, svc))
@@ -33,8 +35,11 @@ func main() {
 
 func makeHTTPTransport(listenAddr string, svc Aggregator) error {
 	fmt.Println("HTTP transport running on port", listenAddr)
+
 	http.HandleFunc("/aggregate", handleAggregate(svc))
 	http.HandleFunc("/invoice", handleGetInvoice(svc))
+	http.Handle("/metrics", promhttp.Handler())
+
 	return http.ListenAndServe(listenAddr, nil)
 }
 

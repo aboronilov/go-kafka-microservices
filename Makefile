@@ -34,11 +34,11 @@ aggregator:
 	@echo "Startig AGGREGATOR app"
 	@./bin/aggregator
 
-kafka:
-	@echo "Runninig kafka with zookeeper..."
+docker:
+	@echo "Runninig instrumental services..."
 	@docker compose up -d
 
 proto:
 	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative types/ptypes.proto
 
-.PHONY: obu receiver calculator kafka aggregator gate
+.PHONY: obu receiver calculator docker aggregator gate
