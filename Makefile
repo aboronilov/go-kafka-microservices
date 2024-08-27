@@ -28,7 +28,7 @@ calculator:
 # 	@echo "Startig INVOICER app"
 # 	@./bin/invoicer
 
-promehteus:
+prometheus:
 	../prometheus/prometheus --config.file=./.config/prometheus.yml
 
 aggregator:
@@ -44,4 +44,4 @@ docker:
 proto:
 	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative types/ptypes.proto
 
-.PHONY: obu receiver calculator docker aggregator gate
+.PHONY: obu receiver calculator docker aggregator gate prometheus

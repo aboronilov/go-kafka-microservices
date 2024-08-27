@@ -35,3 +35,10 @@ services:
       - "9092:9092"
     depends_on:
       - zookeeper
+
+  grafana:
+    image: grafana/grafana:6.7.2
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"

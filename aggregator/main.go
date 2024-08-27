@@ -17,7 +17,7 @@ import (
 
 func main() {
 	logrus.Info("Invoice service started")
-	httpListenAddr := flag.String("httpAddr", ":3000", "the listen port of HTTP transport")
+	httpListenAddr := flag.String("httpAddr", ":4000", "the listen port of HTTP transport")
 	grpcListenAddr := flag.String("grpcAddr", ":3001", "the listen port of GRPC transport")
 	flag.Parse()
 
