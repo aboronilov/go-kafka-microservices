@@ -18,7 +18,8 @@ func NewLogMiddleware(next Aggregator) Aggregator {
 }
 
 type MetricsMiddleware struct {
-	next           Aggregator
+	next Aggregator
+	// reqOBUCounter
 	errCounterAgg  prometheus.Counter
 	errCounterCalc prometheus.Counter
 	reqCounterAgg  prometheus.Counter

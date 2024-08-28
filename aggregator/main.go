@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/aboronilov/go-kafka-microservices/types"
 	"github.com/joho/godotenv"
@@ -44,8 +43,11 @@ func main() {
 func makeHTTPTransport(listenAddr string, svc Aggregator) error {
 	fmt.Println("HTTP transport running on port", listenAddr)
 
-	http.HandleFunc("/aggregate", handleAggregate(svc))
-	http.HandleFunc("/invoice", handleGetInvoice(svc))
+	aggregateMetric := NewHTTPMetricHandler("aggregate")
+	invoiceMetric := NewHTTPMetricHandler("invoice")
+
+	http.HandleFunc("/aggregate", aggregateMetric.instrument(handleAggregate(svc)))
+	http.HandleFunc("/invoice", invoiceMetric.instrument(handleGetInvoice(svc)))
 	http.Handle("/metrics", promhttp.Handler())
 
 	return http.ListenAndServe(listenAddr, nil)
@@ -67,47 +69,6 @@ func makeGRPCtransport(listenAddr string, svc Aggregator) error {
 	server := grpc.NewServer([]grpc.ServerOption{}...)
 	types.RegisterAggregatorServer(server, NewGrpcAggregatorServer(svc))
 	return server.Serve(ln)
-}
-
-func handleGetInvoice(svc Aggregator) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			writeJSON(
-				w,
-				http.StatusBadRequest,
-				map[string]string{"error": "Methot not allowed:"})
-			return
-		}
-
-		invoiceID := r.URL.Query().Get("obu")
-		if invoiceID == "" {
-			writeJSON(
-				w,
-				http.StatusBadRequest,
-				map[string]string{"error": "invoice ID is required"})
-			return
-		}
-
-		id, err := strconv.Atoi(invoiceID)
-		if err != nil {
-			writeJSON(
-				w,
-				http.StatusBadRequest,
-				map[string]string{"error": "invalid invoice ID"})
-			return
-		}
-
-		invoice, err := svc.CalculateInvoice(id)
-		if err != nil {
-			writeJSON(
-				w,
-				http.StatusInternalServerError,
-				map[string]string{"error": err.Error()})
-			return
-		}
-
-		writeJSON(w, http.StatusOK, invoice)
-	}
 }
 
 func handleAggregate(svc Aggregator) http.HandlerFunc {
