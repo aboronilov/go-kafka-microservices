@@ -2,14 +2,15 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/aboronilov/go-kafka-microservices/types"
+	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -17,20 +18,27 @@ import (
 
 func main() {
 	logrus.Info("Invoice service started")
-	httpListenAddr := flag.String("httpAddr", ":4000", "the listen port of HTTP transport")
-	grpcListenAddr := flag.String("grpcAddr", ":3001", "the listen port of GRPC transport")
-	flag.Parse()
 
-	store := NewMemoryStore()
-	svc := NewInvoiceAggregator(store)
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	var (
+		store          = makeStore()
+		svc            = NewInvoiceAggregator(store)
+		grpcListenAddr = os.Getenv("AGG_GRPC_PORT")
+		httpListenAddr = os.Getenv("AGG_HTTP_PORT")
+	)
+
 	svc = NewLogMiddleware(svc)
 	svc = NewMetricsMiddleware(svc)
 
 	go func() {
-		log.Fatal(makeGRPCtransport(*grpcListenAddr, svc))
+		log.Fatal(makeGRPCtransport(grpcListenAddr, svc))
 	}()
 
-	log.Fatal(makeHTTPTransport(*httpListenAddr, svc))
+	log.Fatal(makeHTTPTransport(httpListenAddr, svc))
 }
 
 func makeHTTPTransport(listenAddr string, svc Aggregator) error {
@@ -63,6 +71,14 @@ func makeGRPCtransport(listenAddr string, svc Aggregator) error {
 
 func handleGetInvoice(svc Aggregator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			writeJSON(
+				w,
+				http.StatusBadRequest,
+				map[string]string{"error": "Methot not allowed:"})
+			return
+		}
+
 		invoiceID := r.URL.Query().Get("obu")
 		if invoiceID == "" {
 			writeJSON(
@@ -129,4 +145,16 @@ func writeJSON(w http.ResponseWriter, status int, v any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
+}
+
+func makeStore() Storer {
+	storeType := os.Getenv("AGG_STORE_TYPE")
+
+	switch storeType {
+	case "memory":
+		return NewMemoryStore()
+	default:
+		log.Fatalf("Unknown store type: %s", storeType)
+		return nil
+	}
 }
