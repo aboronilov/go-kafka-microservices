@@ -48,6 +48,14 @@ func (c *KafkaConsumer) Start() {
 	c.readMessageLoop()
 }
 
+func (c *KafkaConsumer) Stop() {
+	logrus.Info("kafka consumer stopping")
+	c.isRunning = false
+	c.consumer.Close()
+	time.Sleep(time.Second) // wait for goroutine to finish before exiting the main function
+	logrus.Info("kafka consumer stopped")
+}
+
 func (c *KafkaConsumer) readMessageLoop() {
 	for c.isRunning {
 		msg, err := c.consumer.ReadMessage(-1)
@@ -59,6 +67,10 @@ func (c *KafkaConsumer) readMessageLoop() {
 		var data types.OBUData
 		if err := json.Unmarshal(msg.Value, &data); err != nil {
 			logrus.Errorf("unmarshal error: %s", err)
+			logrus.WithFields(logrus.Fields{
+				"error":     err.Error(),
+				"requsetID": data.RequestID,
+			})
 			continue
 		}
 
@@ -72,6 +84,7 @@ func (c *KafkaConsumer) readMessageLoop() {
 			Value: distance,
 			ObuID: int32(data.OBUID),
 			Unix:  time.Now().Unix(),
+			// RequestID: data.RequestID,
 		}
 
 		if err := c.aggClient.Aggregate(context.Background(), dist); err != nil {

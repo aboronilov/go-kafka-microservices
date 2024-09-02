@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
+	"math/rand"
 	"net/http"
 
 	"github.com/aboronilov/go-kafka-microservices/types"
@@ -68,6 +70,7 @@ func (dr *DataRecevier) wsRecieveLoop() {
 			log.Printf("Error reading from WS: %v\n", err)
 			continue
 		}
+		data.RequestID = rand.Intn(math.MaxInt)
 		if err = dr.prod.ProduceData(data); err != nil {
 			log.Printf("Error producing data: %v\n", err)
 			continue
